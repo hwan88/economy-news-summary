@@ -174,7 +174,7 @@
 
 <script>
 // ── 상수 ────────────────────────────────────────────────
-const PROXY = 'https://api.allorigins.win/raw?url=';
+const RSS2JSON = 'https://api.rss2json.com/v1/api.json?rss_url=';
 const GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 const BATCH  = 15;
 
@@ -217,22 +217,17 @@ function getWindow(hours) {
 
 // ── RSS 수집 ─────────────────────────────────────────────
 async function fetchRSS(source, start, end) {
-  const url = PROXY + encodeURIComponent(source.rss);
-  const res  = await fetch(url, { signal: AbortSignal.timeout(10000) });
-  const text = await res.text();
-  const doc  = new DOMParser().parseFromString(text, 'text/xml');
+  const url = RSS2JSON + encodeURIComponent(source.rss);
+  const res  = await fetch(url, { signal: AbortSignal.timeout(12000) });
+  const data = await res.json();
+  if (data.status !== 'ok') return [];
   const arts = [];
-  doc.querySelectorAll('item').forEach(item => {
-    const pubRaw = item.querySelector('pubDate')?.textContent?.trim();
-    if (!pubRaw) return;
-    const pub = new Date(pubRaw);
+  data.items.forEach(item => {
+    const pub = new Date(item.pubDate);
     if (isNaN(pub) || pub < start || pub > end) return;
-    const title = item.querySelector('title')?.textContent?.trim() || '';
-    const link  = item.querySelector('link')?.textContent?.trim()
-               || item.querySelector('guid')?.textContent?.trim() || '';
-    const desc  = (item.querySelector('description')?.textContent || '')
-                  .replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 400);
-    arts.push({ source: source.name, title, link, pub, pub_date: fmtDate(pub), content: desc, summary: '' });
+    const desc = (item.description || item.content || '')
+                 .replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 400);
+    arts.push({ source: source.name, title: item.title || '', link: item.link || item.guid || '', pub, pub_date: fmtDate(pub), content: desc, summary: '' });
   });
   return arts;
 }
