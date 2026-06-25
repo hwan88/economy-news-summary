@@ -7,177 +7,122 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
-    background: #f0f4f8;
-    color: #222;
-    min-height: 100vh;
-  }
+  body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; background: #f0f4f8; color: #222; min-height: 100vh; }
 
   header {
     background: linear-gradient(135deg, #1F4E79, #2e6fa3);
-    color: #fff;
-    padding: 1.25rem 2rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
+    color: #fff; padding: 1.1rem 2rem;
+    display: flex; align-items: center; gap: 1rem;
     box-shadow: 0 2px 8px rgba(0,0,0,.2);
   }
-  header h1 { font-size: 1.3rem; font-weight: 700; }
-  header span { font-size: .82rem; opacity: .7; margin-left: auto; }
+  header h1 { font-size: 1.25rem; font-weight: 700; }
+  header span { font-size: .8rem; opacity: .7; margin-left: auto; }
+  .gear-btn {
+    background: rgba(255,255,255,.15); border: none; color: #fff;
+    width: 34px; height: 34px; border-radius: 50%; font-size: 1rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background .2s;
+  }
+  .gear-btn:hover { background: rgba(255,255,255,.28); }
+
+  /* API 키 설정 패널 */
+  #key-panel {
+    display: none;
+    background: #1a3f63; color: #e0ecf8;
+    padding: .85rem 2rem; gap: 1rem; align-items: center;
+    font-size: .85rem; flex-wrap: wrap;
+  }
+  #key-panel label { white-space: nowrap; font-weight: 600; }
+  #key-input {
+    flex: 1; min-width: 220px; padding: .4rem .7rem;
+    border: 1.5px solid #4a7ea8; border-radius: 6px;
+    background: #102840; color: #e0ecf8; font-size: .85rem; font-family: inherit;
+  }
+  #key-input:focus { outline: none; border-color: #5ba8d8; }
+  .save-btn {
+    padding: .4rem 1rem; background: #2e9fda; border: none;
+    border-radius: 6px; color: #fff; font-weight: 700; cursor: pointer;
+    font-size: .85rem; font-family: inherit;
+  }
+  .save-btn:hover { background: #3ab0ec; }
+  #key-status { font-size: .78rem; opacity: .75; }
 
   .wrap { max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; }
 
-  .card {
-    background: #fff;
-    border-radius: 10px;
-    padding: 1.25rem 1.5rem;
-    box-shadow: 0 2px 10px rgba(0,0,0,.07);
-    margin-bottom: 1.25rem;
-  }
-  .card-title {
-    font-size: .78rem;
-    font-weight: 700;
-    color: #1F4E79;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    margin-bottom: 1rem;
-    padding-bottom: .5rem;
-    border-bottom: 2px solid #e8f0f8;
-  }
+  .card { background: #fff; border-radius: 10px; padding: 1.25rem 1.5rem; box-shadow: 0 2px 10px rgba(0,0,0,.07); margin-bottom: 1.25rem; }
+  .card-title { font-size: .78rem; font-weight: 700; color: #1F4E79; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 1rem; padding-bottom: .5rem; border-bottom: 2px solid #e8f0f8; }
 
-  .settings-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
+  .settings-row { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
   .settings-row > div { flex: 1; min-width: 180px; }
-
   label { display: block; font-size: .8rem; color: #555; margin-bottom: .35rem; font-weight: 600; }
+  select { width: 100%; padding: .55rem .75rem; border: 1.5px solid #d0dce8; border-radius: 6px; font-size: .9rem; font-family: inherit; }
+  select:focus { outline: none; border-color: #2e6fa3; }
 
-  select {
-    width: 100%;
-    padding: .55rem .75rem;
-    border: 1.5px solid #d0dce8;
-    border-radius: 6px;
-    font-size: .9rem;
-    font-family: inherit;
-    transition: border-color .2s;
-  }
-  select:focus { outline: none; border-color: #2e6fa3; box-shadow: 0 0 0 3px rgba(46,111,163,.12); }
-
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-    padding: .6rem 1.4rem;
-    border: none;
-    border-radius: 6px;
-    font-size: .9rem;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-    transition: box-shadow .15s;
-    white-space: nowrap;
-  }
+  .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .6rem 1.4rem; border: none; border-radius: 6px; font-size: .9rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: box-shadow .15s; white-space: nowrap; }
   .btn-primary { background: linear-gradient(135deg,#1F4E79,#2e6fa3); color:#fff; box-shadow:0 2px 8px rgba(31,78,121,.3); }
-  .btn-primary:hover { box-shadow: 0 4px 14px rgba(31,78,121,.4); }
-  .btn-primary:disabled { background: #aac0d4; box-shadow: none; cursor: not-allowed; }
+  .btn-primary:hover { box-shadow:0 4px 14px rgba(31,78,121,.4); }
+  .btn-primary:disabled { background:#aac0d4; box-shadow:none; cursor:not-allowed; }
   .btn-excel { background: linear-gradient(135deg,#1a7f37,#2ea84d); color:#fff; box-shadow:0 2px 8px rgba(26,127,55,.3); }
-  .btn-excel:hover { box-shadow: 0 4px 14px rgba(26,127,55,.4); }
-  .btn-excel:disabled { background: #9dcfaa; box-shadow: none; cursor: not-allowed; }
+  .btn-excel:hover { box-shadow:0 4px 14px rgba(26,127,55,.4); }
+  .btn-excel:disabled { background:#9dcfaa; box-shadow:none; cursor:not-allowed; }
 
-  #status-bar {
-    display: none;
-    align-items: center;
-    gap: .75rem;
-    padding: .75rem 1rem;
-    background: #e8f4ff;
-    border-radius: 8px;
-    border-left: 4px solid #2e6fa3;
-    margin-bottom: 1.25rem;
-    font-size: .88rem;
-    color: #1F4E79;
-  }
+  #status-bar { display:none; align-items:center; gap:.75rem; padding:.75rem 1rem; background:#e8f4ff; border-radius:8px; border-left:4px solid #2e6fa3; margin-bottom:1.25rem; font-size:.88rem; color:#1F4E79; }
   #status-bar.error { background:#fff0f0; border-left-color:#c0392b; color:#c0392b; }
+  .spinner { width:18px; height:18px; border:2.5px solid #b0cfe8; border-top-color:#1F4E79; border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; }
+  @keyframes spin { to { transform:rotate(360deg); } }
 
-  .spinner {
-    width: 18px; height: 18px;
-    border: 2.5px solid #b0cfe8;
-    border-top-color: #1F4E79;
-    border-radius: 50%;
-    animation: spin .7s linear infinite;
-    flex-shrink: 0;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .progress-wrap { display:none; margin-bottom:1.25rem; }
+  .progress-label { font-size:.8rem; color:#555; margin-bottom:.4rem; }
+  .progress-bg { background:#e0e8f0; border-radius:99px; height:8px; overflow:hidden; }
+  .progress-fill { height:100%; background:linear-gradient(90deg,#1F4E79,#2e9fda); border-radius:99px; transition:width .3s; width:0; }
 
-  #stats-row {
-    display: none;
-    gap: .75rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.25rem;
-  }
-  .stat-chip {
-    background: #fff;
-    border-radius: 8px;
-    padding: .6rem 1rem;
-    box-shadow: 0 1px 6px rgba(0,0,0,.08);
-    font-size: .8rem;
-    color: #555;
-    flex: 1;
-    text-align: center;
-    min-width: 90px;
-  }
-  .stat-chip strong { display: block; font-size: 1.3rem; color: #1F4E79; }
+  #stats-row { display:none; gap:.75rem; flex-wrap:wrap; margin-bottom:1.25rem; }
+  .stat-chip { background:#fff; border-radius:8px; padding:.6rem 1rem; box-shadow:0 1px 6px rgba(0,0,0,.08); font-size:.8rem; color:#555; flex:1; text-align:center; min-width:90px; }
+  .stat-chip strong { display:block; font-size:1.3rem; color:#1F4E79; }
 
-  .toolbar { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
-  #result-count { font-size: .85rem; color: #666; margin-left: auto; }
+  .toolbar { display:flex; align-items:center; gap:.75rem; flex-wrap:wrap; margin-bottom:1rem; }
+  #result-count { font-size:.85rem; color:#666; margin-left:auto; }
 
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: .82rem; }
-  th {
-    background: #1F4E79; color: #fff;
-    padding: .65rem .75rem; text-align: left;
-    font-weight: 700; white-space: nowrap;
-  }
-  td { padding: .65rem .75rem; border-bottom: 1px solid #e8edf3; vertical-align: top; line-height: 1.55; }
-  tr:hover td { background: #f5f8fc; }
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:.82rem; }
+  th { background:#1F4E79; color:#fff; padding:.65rem .75rem; text-align:left; font-weight:700; white-space:nowrap; }
+  td { padding:.65rem .75rem; border-bottom:1px solid #e8edf3; vertical-align:top; line-height:1.55; }
+  tr:hover td { background:#f5f8fc; }
 
-  .src-badge {
-    display: inline-block; padding: .15rem .55rem;
-    border-radius: 99px; font-size: .72rem; font-weight: 700; white-space: nowrap;
-  }
+  .src-badge { display:inline-block; padding:.15rem .55rem; border-radius:99px; font-size:.72rem; font-weight:700; white-space:nowrap; }
   .src-매일경제 { background:#fff3e0; color:#e65100; }
   .src-연합뉴스 { background:#e3f0fb; color:#1565c0; }
   .src-SBS경제  { background:#e8f5e9; color:#2e7d32; }
   .src-전자신문 { background:#f3e5f5; color:#6a1b9a; }
 
-  .title-cell { max-width: 260px; }
+  .title-cell { max-width:260px; }
   .title-cell a { color:#1F4E79; text-decoration:none; font-weight:600; }
   .title-cell a:hover { text-decoration:underline; }
-  .summary-cell { max-width: 380px; color:#444; }
+  .summary-cell { max-width:380px; color:#444; }
   .time-cell { white-space:nowrap; color:#888; font-size:.78rem; }
   .link-cell a { color:#2e6fa3; text-decoration:none; font-size:.78rem; }
   .link-cell a:hover { text-decoration:underline; }
-
-  #empty {
-    display: none; text-align: center;
-    padding: 3rem; color: #999; font-size: .9rem;
-  }
+  #empty { display:none; text-align:center; padding:3rem; color:#999; font-size:.9rem; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>📰 경제뉴스 자동요약</h1>
+  <h1>&#128240; 경제뉴스 자동요약</h1>
   <span>매일경제 · 연합뉴스 · SBS경제 · 전자신문</span>
+  <button class="gear-btn" onclick="toggleKeyPanel()" title="API 키 설정">&#9881;</button>
 </header>
+
+<!-- API 키 설정 패널 (헤더 아래 숨김) -->
+<div id="key-panel" style="display:none; background:#1a3f63; color:#e0ecf8; padding:.85rem 2rem; display:none; align-items:center; gap:1rem; flex-wrap:wrap; font-size:.85rem;">
+  <label style="color:#e0ecf8; font-weight:600; white-space:nowrap;">Gemini API Key</label>
+  <input type="password" id="key-input" placeholder="AIza... 또는 AQ...." style="flex:1; min-width:220px; padding:.4rem .7rem; border:1.5px solid #4a7ea8; border-radius:6px; background:#102840; color:#e0ecf8; font-size:.85rem;">
+  <button class="save-btn" onclick="saveKey()">저장</button>
+  <span id="key-status"></span>
+</div>
 
 <div class="wrap">
 
-  <!-- 설정 -->
   <div class="card">
     <div class="card-title">수집 설정</div>
     <div class="settings-row">
@@ -191,21 +136,19 @@
         </select>
       </div>
       <div style="flex:0;">
-        <button class="btn btn-primary" id="collect-btn" onclick="startCollect()">
-          &#9658; 수집 시작
-        </button>
+        <button class="btn btn-primary" id="collect-btn" onclick="startCollect()">&#9658; 수집 시작</button>
       </div>
     </div>
   </div>
 
-  <!-- 상태 -->
-  <div id="status-bar">
-    <div class="spinner" id="spinner"></div>
-    <span id="status-text"></span>
+  <div id="status-bar"><div class="spinner" id="spinner"></div><span id="status-text"></span></div>
+
+  <div class="progress-wrap" id="progress-wrap">
+    <div class="progress-label" id="progress-label">AI 요약 생성 중...</div>
+    <div class="progress-bg"><div class="progress-fill" id="progress-fill"></div></div>
   </div>
 
-  <!-- 통계 -->
-  <div id="stats-row" style="display:none;">
+  <div id="stats-row">
     <div class="stat-chip"><strong id="stat-total">0</strong>총 기사</div>
     <div class="stat-chip"><strong id="stat-mk">0</strong>매일경제</div>
     <div class="stat-chip"><strong id="stat-yna">0</strong>연합뉴스</div>
@@ -213,93 +156,212 @@
     <div class="stat-chip"><strong id="stat-et">0</strong>전자신문</div>
   </div>
 
-  <!-- 결과 -->
   <div class="card" id="result-card" style="display:none;">
     <div class="toolbar">
       <div class="card-title" style="margin:0;border:0;padding:0;">결과</div>
       <span id="result-count"></span>
-      <button class="btn btn-excel" id="excel-btn" onclick="downloadExcel()" disabled>
-        &#11015; Excel 다운로드
-      </button>
+      <button class="btn btn-excel" id="excel-btn" onclick="downloadExcel()" disabled>&#11015; Excel 다운로드</button>
     </div>
-
     <div id="empty">수집된 기사가 없습니다. 시간 범위를 늘려 보세요.</div>
-
     <div class="table-wrap" id="table-wrap" style="display:none;">
       <table>
-        <thead>
-          <tr>
-            <th>No</th><th>출처</th><th>발행시각</th>
-            <th>제목</th><th>AI 요약</th><th>링크</th>
-          </tr>
-        </thead>
+        <thead><tr><th>No</th><th>출처</th><th>발행시각</th><th>제목</th><th>AI 요약</th><th>링크</th></tr></thead>
         <tbody id="news-body"></tbody>
       </table>
     </div>
   </div>
-
 </div>
 
 <script>
+// ── 상수 ────────────────────────────────────────────────
+const PROXY = 'https://api.allorigins.win/raw?url=';
+const GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const BATCH  = 15;
+
+const SOURCES = [
+  { name: '매일경제', rss: 'https://www.mk.co.kr/rss/30000001/' },
+  { name: '연합뉴스', rss: 'https://www.yna.co.kr/rss/economy.xml' },
+  { name: 'SBS경제',  rss: 'https://news.sbs.co.kr/news/SectionRssFeed.do?sectionId=02' },
+  { name: '전자신문', rss: 'https://rss.etnews.com/Section901.xml' },
+];
+
 let savedArticles = [];
 
-async function startCollect() {
-  const hours = parseInt(document.getElementById('time-range').value);
-
-  document.getElementById('collect-btn').disabled = true;
-  document.getElementById('collect-btn').textContent = '수집 중...';
-  setStatus('뉴스 수집 및 AI 요약 중... 잠시만 기다려 주세요.', false);
-  document.getElementById('result-card').style.display = 'none';
-  document.getElementById('stats-row').style.display = 'none';
-
-  try {
-    const res = await fetch('/api/news?hours=' + hours);
-    const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error || 'API 오류');
-    setStatus('', false);
-    renderResults(data.articles);
-  } catch (e) {
-    setStatus('오류: ' + e.message, true);
-  } finally {
-    document.getElementById('collect-btn').disabled = false;
-    document.getElementById('collect-btn').textContent = '▶ 수집 시작';
+// ── API 키 관리 ──────────────────────────────────────────
+function toggleKeyPanel() {
+  const p = document.getElementById('key-panel');
+  const visible = p.style.display === 'flex';
+  p.style.display = visible ? 'none' : 'flex';
+  if (!visible) {
+    const k = localStorage.getItem('gemini_key') || '';
+    document.getElementById('key-input').value = k;
+    document.getElementById('key-status').textContent = k ? '키 저장됨' : '키 없음';
   }
 }
 
+function saveKey() {
+  const v = document.getElementById('key-input').value.trim();
+  if (!v) { alert('API 키를 입력하세요.'); return; }
+  localStorage.setItem('gemini_key', v);
+  document.getElementById('key-status').textContent = '저장 완료!';
+  setTimeout(() => document.getElementById('key-panel').style.display = 'none', 800);
+}
+
+function getKey() { return localStorage.getItem('gemini_key') || ''; }
+
+// ── 시간 범위 ────────────────────────────────────────────
+function getWindow(hours) {
+  const now = Date.now();
+  return { start: new Date(now - hours * 3600000), end: new Date(now) };
+}
+
+// ── RSS 수집 ─────────────────────────────────────────────
+async function fetchRSS(source, start, end) {
+  const url = PROXY + encodeURIComponent(source.rss);
+  const res  = await fetch(url, { signal: AbortSignal.timeout(10000) });
+  const text = await res.text();
+  const doc  = new DOMParser().parseFromString(text, 'text/xml');
+  const arts = [];
+  doc.querySelectorAll('item').forEach(item => {
+    const pubRaw = item.querySelector('pubDate')?.textContent?.trim();
+    if (!pubRaw) return;
+    const pub = new Date(pubRaw);
+    if (isNaN(pub) || pub < start || pub > end) return;
+    const title = item.querySelector('title')?.textContent?.trim() || '';
+    const link  = item.querySelector('link')?.textContent?.trim()
+               || item.querySelector('guid')?.textContent?.trim() || '';
+    const desc  = (item.querySelector('description')?.textContent || '')
+                  .replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 400);
+    arts.push({ source: source.name, title, link, pub, pub_date: fmtDate(pub), content: desc, summary: '' });
+  });
+  return arts;
+}
+
+async function fetchAll(hours) {
+  const { start, end } = getWindow(hours);
+  const results = await Promise.allSettled(SOURCES.map(s => fetchRSS(s, start, end)));
+  const arts = results.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+  arts.sort((a, b) => a.pub - b.pub);
+  return arts.slice(0, 50);
+}
+
+// ── Gemini 요약 ──────────────────────────────────────────
+async function summarizeBatch(chunk, apiKey, attempt = 0) {
+  const lines = chunk.map((a, i) =>
+    `[${i+1}] 제목: ${a.title}\n내용: ${a.content.slice(0, 250)}`
+  ).join('\n\n');
+  const prompt = '아래 경제 뉴스 기사를 각각 2~3문장으로 요약하세요.\n'
+    + '반드시 "[번호] 요약문" 형식으로 출력하고, 수치는 그대로 유지하세요.\n\n' + lines;
+
+  const res = await fetch(`${GEMINI}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+  });
+
+  if (res.status === 429 && attempt < 4) {
+    const wait = 35 * (attempt + 1);
+    setStatus(`API 한도 초과. ${wait}초 후 재시도 (${attempt+1}/4)...`, false);
+    await sleep(wait * 1000);
+    return summarizeBatch(chunk, apiKey, attempt + 1);
+  }
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+
+  const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const map = {};
+  raw.split('\n').forEach(line => {
+    const m = line.match(/^\[(\d+)\]\s*(.+)/);
+    if (m) map[+m[1]] = m[2].trim();
+  });
+  return chunk.map((_, i) => map[i + 1] || '');
+}
+
+async function summarizeAll(articles, apiKey) {
+  for (let i = 0; i < articles.length; i += BATCH) {
+    const chunk = articles.slice(i, i + BATCH);
+    setProgress(i, articles.length);
+    try {
+      const sums = await summarizeBatch(chunk, apiKey);
+      chunk.forEach((a, j) => { a.summary = sums[j]; });
+    } catch (e) {
+      chunk.forEach(a => { a.summary = `요약 오류: ${e.message}`; });
+    }
+    if (i + BATCH < articles.length) await sleep(4000);
+  }
+  setProgress(articles.length, articles.length);
+}
+
+// ── 메인 흐름 ────────────────────────────────────────────
+async function startCollect() {
+  const key   = getKey();
+  const hours = parseInt(document.getElementById('time-range').value);
+
+  if (!key) {
+    alert('먼저 오른쪽 상단 ⚙ 버튼에서 Gemini API 키를 설정하세요.');
+    toggleKeyPanel();
+    return;
+  }
+
+  setBusy(true);
+  setStatus('RSS 수집 중...', false);
+  document.getElementById('result-card').style.display = 'none';
+  document.getElementById('stats-row').style.display = 'none';
+
+  let articles = [];
+  try {
+    articles = await fetchAll(hours);
+  } catch (e) {
+    setStatus('RSS 수집 실패: ' + e.message, true);
+    setBusy(false);
+    return;
+  }
+
+  if (!articles.length) {
+    setStatus('', false);
+    showProgress(false);
+    renderResults([]);
+    setBusy(false);
+    return;
+  }
+
+  setStatus(`${articles.length}건 수집. AI 요약 생성 중...`, false);
+  showProgress(true);
+  await summarizeAll(articles, key);
+
+  setStatus('', false);
+  showProgress(false);
+  renderResults(articles);
+  setBusy(false);
+}
+
+// ── 결과 렌더 ────────────────────────────────────────────
 function renderResults(articles) {
   savedArticles = articles;
   document.getElementById('result-card').style.display = '';
 
-  const counts = { '매일경제': 0, '연합뉴스': 0, 'SBS경제': 0, '전자신문': 0 };
-  articles.forEach(a => { if (a.source in counts) counts[a.source]++; });
-
+  const c = { '매일경제':0,'연합뉴스':0,'SBS경제':0,'전자신문':0 };
+  articles.forEach(a => { if (a.source in c) c[a.source]++; });
   document.getElementById('stats-row').style.display = 'flex';
   document.getElementById('stat-total').textContent = articles.length;
-  document.getElementById('stat-mk').textContent  = counts['매일경제'];
-  document.getElementById('stat-yna').textContent = counts['연합뉴스'];
-  document.getElementById('stat-sbs').textContent = counts['SBS경제'];
-  document.getElementById('stat-et').textContent  = counts['전자신문'];
-  document.getElementById('result-count').textContent = '총 ' + articles.length + '건';
+  document.getElementById('stat-mk').textContent  = c['매일경제'];
+  document.getElementById('stat-yna').textContent = c['연합뉴스'];
+  document.getElementById('stat-sbs').textContent = c['SBS경제'];
+  document.getElementById('stat-et').textContent  = c['전자신문'];
+  document.getElementById('result-count').textContent = `총 ${articles.length}건`;
 
   const empty = document.getElementById('empty');
   const wrap  = document.getElementById('table-wrap');
-  const body  = document.getElementById('news-body');
-  const xlBtn = document.getElementById('excel-btn');
+  document.getElementById('excel-btn').disabled = !articles.length;
 
-  if (!articles.length) {
-    empty.style.display = '';
-    wrap.style.display = 'none';
-    xlBtn.disabled = true;
-    return;
-  }
-
+  if (!articles.length) { empty.style.display = ''; wrap.style.display = 'none'; return; }
   empty.style.display = 'none';
-  wrap.style.display = '';
-  xlBtn.disabled = false;
+  wrap.style.display  = '';
 
-  body.innerHTML = articles.map((a, i) => `
+  document.getElementById('news-body').innerHTML = articles.map((a, i) => `
     <tr>
-      <td>${i + 1}</td>
+      <td>${i+1}</td>
       <td><span class="src-badge src-${esc(a.source)}">${esc(a.source)}</span></td>
       <td class="time-cell">${esc(a.pub_date)}</td>
       <td class="title-cell"><a href="${esc(a.link)}" target="_blank" rel="noopener">${esc(a.title)}</a></td>
@@ -308,17 +370,25 @@ function renderResults(articles) {
     </tr>`).join('');
 }
 
+// ── Excel ────────────────────────────────────────────────
 function downloadExcel() {
   if (!savedArticles.length) return;
-  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const d  = new Date().toISOString().slice(0,10).replace(/-/g,'');
   const ws = XLSX.utils.aoa_to_sheet([
-    ['No', '출처', '발행시각', '제목', 'AI 요약', '원문 링크'],
-    ...savedArticles.map((a, i) => [i + 1, a.source, a.pub_date, a.title, a.summary, a.link])
+    ['No','출처','발행시각','제목','AI 요약','원문 링크'],
+    ...savedArticles.map((a,i) => [i+1, a.source, a.pub_date, a.title, a.summary, a.link])
   ]);
   ws['!cols'] = [{wch:5},{wch:10},{wch:13},{wch:40},{wch:52},{wch:35}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, '경제뉴스요약');
-  XLSX.writeFile(wb, `경제뉴스_${dateStr}.xlsx`);
+  XLSX.writeFile(wb, `경제뉴스_${d}.xlsx`);
+}
+
+// ── UI 헬퍼 ──────────────────────────────────────────────
+function setBusy(b) {
+  const btn = document.getElementById('collect-btn');
+  btn.disabled = b;
+  btn.textContent = b ? '수집 중...' : '▶ 수집 시작';
 }
 
 function setStatus(msg, isError) {
@@ -330,11 +400,32 @@ function setStatus(msg, isError) {
   document.getElementById('spinner').style.display = isError ? 'none' : '';
 }
 
-function esc(s) {
-  return String(s || '')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function showProgress(v) {
+  document.getElementById('progress-wrap').style.display = v ? '' : 'none';
 }
+
+function setProgress(done, total) {
+  const pct = total ? Math.round(done / total * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = `AI 요약 생성 중... (${done}/${total}건, ${pct}%)`;
+}
+
+function fmtDate(d) {
+  return `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// 초기 로드 시 키 있으면 상태 표시
+window.addEventListener('DOMContentLoaded', () => {
+  if (!getKey()) {
+    setTimeout(() => { setStatus('오른쪽 상단 ⚙ 버튼에서 Gemini API 키를 먼저 설정하세요.', false); }, 300);
+  }
+});
 </script>
 </body>
 </html>
