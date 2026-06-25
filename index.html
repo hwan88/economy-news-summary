@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>경제뉴스 자동요약</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+    background: #f0f4f8;
+    color: #222;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #1F4E79, #2e6fa3);
+    color: #fff;
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+  header h1 { font-size: 1.3rem; font-weight: 700; }
+  header span { font-size: .82rem; opacity: .7; margin-left: auto; }
+
+  .wrap { max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; }
+
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    margin-bottom: 1.25rem;
+  }
+  .card-title {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #1F4E79;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 1rem;
+    padding-bottom: .5rem;
+    border-bottom: 2px solid #e8f0f8;
+  }
+
+  .settings-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .settings-row > div { flex: 1; min-width: 180px; }
+
+  label { display: block; font-size: .8rem; color: #555; margin-bottom: .35rem; font-weight: 600; }
+
+  select {
+    width: 100%;
+    padding: .55rem .75rem;
+    border: 1.5px solid #d0dce8;
+    border-radius: 6px;
+    font-size: .9rem;
+    font-family: inherit;
+    transition: border-color .2s;
+  }
+  select:focus { outline: none; border-color: #2e6fa3; box-shadow: 0 0 0 3px rgba(46,111,163,.12); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .6rem 1.4rem;
+    border: none;
+    border-radius: 6px;
+    font-size: .9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: box-shadow .15s;
+    white-space: nowrap;
+  }
+  .btn-primary { background: linear-gradient(135deg,#1F4E79,#2e6fa3); color:#fff; box-shadow:0 2px 8px rgba(31,78,121,.3); }
+  .btn-primary:hover { box-shadow: 0 4px 14px rgba(31,78,121,.4); }
+  .btn-primary:disabled { background: #aac0d4; box-shadow: none; cursor: not-allowed; }
+  .btn-excel { background: linear-gradient(135deg,#1a7f37,#2ea84d); color:#fff; box-shadow:0 2px 8px rgba(26,127,55,.3); }
+  .btn-excel:hover { box-shadow: 0 4px 14px rgba(26,127,55,.4); }
+  .btn-excel:disabled { background: #9dcfaa; box-shadow: none; cursor: not-allowed; }
+
+  #status-bar {
+    display: none;
+    align-items: center;
+    gap: .75rem;
+    padding: .75rem 1rem;
+    background: #e8f4ff;
+    border-radius: 8px;
+    border-left: 4px solid #2e6fa3;
+    margin-bottom: 1.25rem;
+    font-size: .88rem;
+    color: #1F4E79;
+  }
+  #status-bar.error { background:#fff0f0; border-left-color:#c0392b; color:#c0392b; }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2.5px solid #b0cfe8;
+    border-top-color: #1F4E79;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #stats-row {
+    display: none;
+    gap: .75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+  .stat-chip {
+    background: #fff;
+    border-radius: 8px;
+    padding: .6rem 1rem;
+    box-shadow: 0 1px 6px rgba(0,0,0,.08);
+    font-size: .8rem;
+    color: #555;
+    flex: 1;
+    text-align: center;
+    min-width: 90px;
+  }
+  .stat-chip strong { display: block; font-size: 1.3rem; color: #1F4E79; }
+
+  .toolbar { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  #result-count { font-size: .85rem; color: #666; margin-left: auto; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  th {
+    background: #1F4E79; color: #fff;
+    padding: .65rem .75rem; text-align: left;
+    font-weight: 700; white-space: nowrap;
+  }
+  td { padding: .65rem .75rem; border-bottom: 1px solid #e8edf3; vertical-align: top; line-height: 1.55; }
+  tr:hover td { background: #f5f8fc; }
+
+  .src-badge {
+    display: inline-block; padding: .15rem .55rem;
+    border-radius: 99px; font-size: .72rem; font-weight: 700; white-space: nowrap;
+  }
+  .src-매일경제 { background:#fff3e0; color:#e65100; }
+  .src-연합뉴스 { background:#e3f0fb; color:#1565c0; }
+  .src-SBS경제  { background:#e8f5e9; color:#2e7d32; }
+  .src-전자신문 { background:#f3e5f5; color:#6a1b9a; }
+
+  .title-cell { max-width: 260px; }
+  .title-cell a { color:#1F4E79; text-decoration:none; font-weight:600; }
+  .title-cell a:hover { text-decoration:underline; }
+  .summary-cell { max-width: 380px; color:#444; }
+  .time-cell { white-space:nowrap; color:#888; font-size:.78rem; }
+  .link-cell a { color:#2e6fa3; text-decoration:none; font-size:.78rem; }
+  .link-cell a:hover { text-decoration:underline; }
+
+  #empty {
+    display: none; text-align: center;
+    padding: 3rem; color: #999; font-size: .9rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📰 경제뉴스 자동요약</h1>
+  <span>매일경제 · 연합뉴스 · SBS경제 · 전자신문</span>
+</header>
+
+<div class="wrap">
+
+  <!-- 설정 -->
+  <div class="card">
+    <div class="card-title">수집 설정</div>
+    <div class="settings-row">
+      <div>
+        <label for="time-range">수집 범위</label>
+        <select id="time-range">
+          <option value="14">어젯밤 — 전날 오후 6시 ~ 오전 8시</option>
+          <option value="4" selected>오늘 최근 4시간</option>
+          <option value="8">오늘 최근 8시간</option>
+          <option value="24">최근 24시간</option>
+        </select>
+      </div>
+      <div style="flex:0;">
+        <button class="btn btn-primary" id="collect-btn" onclick="startCollect()">
+          &#9658; 수집 시작
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 상태 -->
+  <div id="status-bar">
+    <div class="spinner" id="spinner"></div>
+    <span id="status-text"></span>
+  </div>
+
+  <!-- 통계 -->
+  <div id="stats-row" style="display:none;">
+    <div class="stat-chip"><strong id="stat-total">0</strong>총 기사</div>
+    <div class="stat-chip"><strong id="stat-mk">0</strong>매일경제</div>
+    <div class="stat-chip"><strong id="stat-yna">0</strong>연합뉴스</div>
+    <div class="stat-chip"><strong id="stat-sbs">0</strong>SBS경제</div>
+    <div class="stat-chip"><strong id="stat-et">0</strong>전자신문</div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="card" id="result-card" style="display:none;">
+    <div class="toolbar">
+      <div class="card-title" style="margin:0;border:0;padding:0;">결과</div>
+      <span id="result-count"></span>
+      <button class="btn btn-excel" id="excel-btn" onclick="downloadExcel()" disabled>
+        &#11015; Excel 다운로드
+      </button>
+    </div>
+
+    <div id="empty">수집된 기사가 없습니다. 시간 범위를 늘려 보세요.</div>
+
+    <div class="table-wrap" id="table-wrap" style="display:none;">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th><th>출처</th><th>발행시각</th>
+            <th>제목</th><th>AI 요약</th><th>링크</th>
+          </tr>
+        </thead>
+        <tbody id="news-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let savedArticles = [];
+
+async function startCollect() {
+  const hours = parseInt(document.getElementById('time-range').value);
+
+  document.getElementById('collect-btn').disabled = true;
+  document.getElementById('collect-btn').textContent = '수집 중...';
+  setStatus('뉴스 수집 및 AI 요약 중... 잠시만 기다려 주세요.', false);
+  document.getElementById('result-card').style.display = 'none';
+  document.getElementById('stats-row').style.display = 'none';
+
+  try {
+    const res = await fetch('/api/news?hours=' + hours);
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || 'API 오류');
+    setStatus('', false);
+    renderResults(data.articles);
+  } catch (e) {
+    setStatus('오류: ' + e.message, true);
+  } finally {
+    document.getElementById('collect-btn').disabled = false;
+    document.getElementById('collect-btn').textContent = '▶ 수집 시작';
+  }
+}
+
+function renderResults(articles) {
+  savedArticles = articles;
+  document.getElementById('result-card').style.display = '';
+
+  const counts = { '매일경제': 0, '연합뉴스': 0, 'SBS경제': 0, '전자신문': 0 };
+  articles.forEach(a => { if (a.source in counts) counts[a.source]++; });
+
+  document.getElementById('stats-row').style.display = 'flex';
+  document.getElementById('stat-total').textContent = articles.length;
+  document.getElementById('stat-mk').textContent  = counts['매일경제'];
+  document.getElementById('stat-yna').textContent = counts['연합뉴스'];
+  document.getElementById('stat-sbs').textContent = counts['SBS경제'];
+  document.getElementById('stat-et').textContent  = counts['전자신문'];
+  document.getElementById('result-count').textContent = '총 ' + articles.length + '건';
+
+  const empty = document.getElementById('empty');
+  const wrap  = document.getElementById('table-wrap');
+  const body  = document.getElementById('news-body');
+  const xlBtn = document.getElementById('excel-btn');
+
+  if (!articles.length) {
+    empty.style.display = '';
+    wrap.style.display = 'none';
+    xlBtn.disabled = true;
+    return;
+  }
+
+  empty.style.display = 'none';
+  wrap.style.display = '';
+  xlBtn.disabled = false;
+
+  body.innerHTML = articles.map((a, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><span class="src-badge src-${esc(a.source)}">${esc(a.source)}</span></td>
+      <td class="time-cell">${esc(a.pub_date)}</td>
+      <td class="title-cell"><a href="${esc(a.link)}" target="_blank" rel="noopener">${esc(a.title)}</a></td>
+      <td class="summary-cell">${esc(a.summary)}</td>
+      <td class="link-cell"><a href="${esc(a.link)}" target="_blank" rel="noopener">원문 &#8599;</a></td>
+    </tr>`).join('');
+}
+
+function downloadExcel() {
+  if (!savedArticles.length) return;
+  const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['No', '출처', '발행시각', '제목', 'AI 요약', '원문 링크'],
+    ...savedArticles.map((a, i) => [i + 1, a.source, a.pub_date, a.title, a.summary, a.link])
+  ]);
+  ws['!cols'] = [{wch:5},{wch:10},{wch:13},{wch:40},{wch:52},{wch:35}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '경제뉴스요약');
+  XLSX.writeFile(wb, `경제뉴스_${dateStr}.xlsx`);
+}
+
+function setStatus(msg, isError) {
+  const bar = document.getElementById('status-bar');
+  if (!msg) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  bar.className = isError ? 'error' : '';
+  document.getElementById('status-text').textContent = msg;
+  document.getElementById('spinner').style.display = isError ? 'none' : '';
+}
+
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
