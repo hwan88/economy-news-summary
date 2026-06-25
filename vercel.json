@@ -1,7 +1,4 @@
 {
-  "functions": {
-    "api/*.py": {
-      "maxDuration": 60
-    }
-  }
+  "buildCommand": null,
+  "outputDirectory": null
 }
